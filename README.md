@@ -366,7 +366,7 @@ python test_robota_complete.py
 
 ## 🌟 درباره من (توسعه‌دهنده)
 
-سلام! من **امیرعلی مومنی** هستم، برنامه‌نویس ارشد پایتون و عاشق دنیای متن‌باز.
+سلام! من **امیرعلی مومنی** هستم، برنامه‌نویس پایتون.
 
 - **گیت‌هاب**: [@amiralicoldark](https://github.com/amiralicoldark)
 - **روبیکا**: [@am1ralimo](https://rubika.ir/am1ralimo)
