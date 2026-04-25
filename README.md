@@ -40,9 +40,7 @@ pip install robota
 ### نصب دستی
 
 ```bash
-git clone https://github.com/amiralicoldark/Robota.git
-cd Robota
-python setup.py install
+pip install git+https://github.com/amiralicoldark/Robota.git
 ```
 
 ---
