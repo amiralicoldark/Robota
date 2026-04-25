@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Robota | مستندات رسمی کتابخانه بات روبیکا</title>
+    <!-- React & ReactDOM -->
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <!-- Font Awesome Icons (optional) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0c0a1f 0%, #1a1535 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #eef;
+            padding: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .app-container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #c084fc, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+        .badge-group {
+            margin: 1rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.7rem;
+        }
+        .badge {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(4px);
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .badge i {
+            margin-left: 6px;
+        }
+
+        /* cards */
+        .card {
+            background: rgba(20, 20, 45, 0.65);
+            backdrop-filter: blur(12px);
+            border-radius: 1.5rem;
+            padding: 1.8rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: 0.2s;
+        }
+        .card h2 {
+            font-size: 1.7rem;
+            margin-bottom: 1rem;
+            color: #c4b5fd;
+            border-right: 4px solid #8b5cf6;
+            padding-right: 1rem;
+        }
+        .card h3 {
+            font-size: 1.3rem;
+            margin: 1.2rem 0 0.8rem;
+            color: #a78bfa;
+        }
+        pre {
+            background: #0a0a1a;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #bbf0d0;
+            border: 1px solid #2d2d55;
+            margin: 1rem 0;
+            direction: ltr;
+            text-align: left;
+        }
+        code {
+            font-family: monospace;
+            background: #1e1e3a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        .method-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .method-item {
+            background: rgba(0,0,0,0.3);
+            border-radius: 1rem;
+            padding: 1rem;
+            border-left: 3px solid #8b5cf6;
+            transition: 0.2s;
+        }
+        .method-item:hover {
+            background: rgba(139,92,246,0.15);
+            transform: translateY(-2px);
+        }
+        .method-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #f0e6ff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .method-desc {
+            font-size: 0.85rem;
+            color: #ccd;
+            margin-top: 0.4rem;
+        }
+        .method-example {
+            font-size: 0.75rem;
+            background: #00000030;
+            padding: 0.4rem;
+            border-radius: 8px;
+            margin-top: 0.7rem;
+            font-family: monospace;
+            direction: ltr;
+            text-align: left;
+        }
+        .btn-demo {
+            background: #2d2d6b;
+            border: none;
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: 0.2s;
+        }
+        .btn-demo:hover {
+            background: #6d28d9;
+        }
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 2rem;
+            color: #aaa;
+        }
+        a {
+            color: #c084fc;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 700px) {
+            body { padding: 0.8rem; }
+            .card { padding: 1rem; }
+            .method-grid { grid-template-columns: 1fr; }
+        }
+        .tab-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .tab {
+            background: rgba(255,255,255,0.05);
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tab.active {
+            background: #8b5cf6;
+            color: white;
+        }
+        .install-box {
+            background: #0e0e1a;
+            border-radius: 1rem;
+            padding: 1rem;
+            font-family: monospace;
+            direction: ltr;
+            text-align: left;
+        }
+        .icon-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // ---------- داده‌های متدها ----------
+    const methodsList = [
+        { name: "get_me", desc: "دریافت اطلاعات بات (نام، یوزرنیم، آواتار)", example: "me = bot.get_me()\nprint(me.bot_title)" },
+        { name: "send_message", desc: "ارسال پیام متنی + کیپد/اینلاین/متادیتا", example: "bot.send_message(chat_id, 'متن', inline_keypad=keypad)" },
+        { name: "send_poll", desc: "ارسال نظرسنجی", example: "bot.send_poll(chat_id, 'سوال؟', ['گزینه1','گزینه2'])" },
+        { name: "send_location", desc: "ارسال موقعیت مکانی", example: "bot.send_location(chat_id, 35.6997, 51.3381)" },
+        { name: "send_contact", desc: "ارسال مخاطب", example: "bot.send_contact(chat_id, 'علی','رضایی','09123456789')" },
+        { name: "get_chat", desc: "دریافت اطلاعات چت", example: "chat = bot.get_chat(chat_id)" },
+        { name: "get_updates", desc: "دریافت آپدیت‌ها (لانگ پولینگ)", example: "updates, next_id = bot.get_updates(limit=10)" },
+        { name: "forward_message", desc: "فوروارد پیام به چت دیگر", example: "bot.forward_message(from_chat, msg_id, to_chat)" },
+        { name: "edit_message_text", desc: "ویرایش متن پیام", example: "bot.edit_message_text(chat_id, msg_id, 'متن جدید')" },
+        { name: "delete_message", desc: "حذف پیام", example: "bot.delete_message(chat_id, msg_id)" },
+        { name: "set_commands", desc: "تنظیم دستورات منوی بات", example: "bot.set_commands([{'command':'start','description':'شروع'}])" },
+        { name: "edit_chat_keypad", desc: "اضافه/حذف کیپد پایین چت", example: "bot.edit_chat_keypad(chat_id, keypad, 'New')" },
+        { name: "upload_and_send_file", desc: "آپلود و ارسال فایل یک مرحله‌ای", example: "bot.upload_and_send_file(chat_id, 'photo.jpg', 'Image','caption')" },
+        { name: "ban_chat_member", desc: "مسدود کردن کاربر گروه", example: "bot.ban_chat_member(group_id, user_id)" },
+        { name: "unban_chat_member", desc: "رفع مسدودیت کاربر", example: "bot.unban_chat_member(group_id, user_id)" }
+    ];
+
+    // دکمه‌های نمونه با RubikaHelpers (نمایشی)
+    const buttonDemo = [
+        "simple_button('btn1', 'کلیک کن')",
+        "link_button('btn2', 'وب‌سایت', 'https://rubika.ir')",
+        "number_picker_button('num', 'انتخاب سن', 1, 100, default=25)",
+        "camera_image_button('cam', '📸 عکس')",
+        "ask_phone_button('phone', 'ارسال شماره')"
+    ];
+
+    // ----------------------------------------------
+    // کامپوننت اصلی
+    // ----------------------------------------------
+    const App = () => {
+        const [activeTab, setActiveTab] = useState("install");
+
+        return (
+            <div className="app-container">
+                <div className="header">
+                    <h1><i className="fab fa-python"></i> Robota</h1>
+                    <div className="badge-group">
+                        <div className="badge"><i className="fas fa-code"></i> Python 3.8+</div>
+                        <div className="badge"><i className="fas fa-cube"></i> Full API Coverage</div>
+                        <div className="badge"><i className="fab fa-github"></i> Open Source</div>
+                        <div className="badge"><i className="fas fa-robot"></i> Rubika Bot API</div>
+                    </div>
+                    <p style={{maxWidth: "700px", margin: "0 auto", opacity:0.8}}>
+                        کتابخانه رسمی و کامل ربات روبیکا – تمام متدها، دکمه‌های تعاملی، متادیتا و مدیریت فایل
+                    </p>
+                </div>
+
+                <div className="tab-bar">
+                    <div className={`tab ${activeTab === "install" ? "active" : ""}`} onClick={() => setActiveTab("install")}>📦 نصب و شروع سریع</div>
+                    <div className={`tab ${activeTab === "methods" ? "active" : ""}`} onClick={() => setActiveTab("methods")}>📚 متدها</div>
+                    <div className={`tab ${activeTab === "buttons" ? "active" : ""}`} onClick={() => setActiveTab("buttons")}>🧩 دکمه‌ها و کیپد</div>
+                    <div className={`tab ${activeTab === "metadata" ? "active" : ""}`} onClick={() => setActiveTab("metadata")}>🎨 متادیتا (فرمت متن)</div>
+                    <div className={`tab ${activeTab === "updates" ? "active" : ""}`} onClick={() => setActiveTab("updates")}>🔄 دریافت رویدادها</div>
+                    <div className={`tab ${activeTab === "about" ? "active" : ""}`} onClick={() => setActiveTab("about")}>👤 درباره توسعه‌دهنده</div>
+                </div>
+
+                {/* تب نصب */}
+                {activeTab === "install" && (
+                    <div className="card">
+                        <h2><i className="fas fa-download"></i> نصب Robota</h2>
+                        <div className="install-box">
+                            <pre><code>pip install git+https://github.com/amiralicoldark/Robota.git</code></pre>
+                        </div>
+                        <h3>🚀 شروع سریع (ارسال پیام)</h3>
+                        <pre>{`from robota import RubikaBot
+
+bot = RubikaBot("YOUR_TOKEN")
+CHAT_ID = "c123456789"   # شناسه چت خود را از @UserInfoRobot بگیرید
+
+bot.send_message(CHAT_ID, "سلام! این ربات من است 🤖")`}</pre>
+                        <h3>🔑 گرفتن توکن و chat_id</h3>
+                        <p>1. در روبیکا به <strong>@BotFather</strong> پیام دهید و یک بات بسازید.<br/>
+                        2. توکن دریافتی را ذخیره کنید.<br/>
+                        3. برای گرفتن chat_id خود، به ربات <strong>@UserInfoRobot</strong> پیام دهید یا از متد get_updates استفاده کنید.<br/>
+                        4. توکن و chat_id را در کد قرار دهید.</p>
+                        <p><i className="fas fa-check-circle" style={{color:"#a5f3c3"}}></i> آماده‌اید! بقیه متدها را در تب‌های بعدی ببینید.</p>
+                    </div>
+                )}
+
+                {/* تب متدها */}
+                {activeTab === "methods" && (
+                    <div className="card">
+                        <h2><i className="fas fa-terminal"></i> متدهای اصلی Robota</h2>
+                        <div className="method-grid">
+                            {methodsList.map((m, idx) => (
+                                <div className="method-item" key={idx}>
+                                    <div className="method-name">
+                                        <i className="fas fa-microphone-alt"></i> {m.name}
+                                    </div>
+                                    <div className="method-desc">{m.desc}</div>
+                                    <div className="method-example">{m.example}</div>
+                                </div>
+                            ))}
+                        </div>
+                        <p style={{marginTop:"1rem"}}>💡 <strong>نکته:</strong> تمام متدهای رسمی مانند <code>getFile</code>, <code>edit_message_keypad</code>, <code>request_send_file</code> نیز پشتیبانی می‌شوند. برای دیدن جزئیات کامل به <a href="https://github.com/amiralicoldark/Robota" target="_blank">مخزن GitHub</a> مراجعه کنید.</p>
+                    </div>
+                )}
+
+                {/* تب دکمه‌ها و کیپد */}
+                {activeTab === "buttons" && (
+                    <div className="card">
+                        <h2><i className="fas fa-tablet-alt"></i> ساخت دکمه‌های تعاملی (RubikaHelpers)</h2>
+                        <pre>{`from robota import RubikaHelpers
+
+# دکمه ساده
+btn1 = RubikaHelpers.simple_button("id1", "متن دکمه")
+
+# دکمه لینک
+btn2 = RubikaHelpers.link_button("id2", "وب‌سایت", "https://rubika.ir")
+
+# ردیف و کیپد
+row = RubikaHelpers.row(btn1, btn2)
+keypad = RubikaHelpers.keypad([row], resize_keyboard=True)
+
+# ارسال با inline_keypad
+bot.send_message(chat_id, "لطفاً انتخاب کنید:", inline_keypad=keypad)`}</pre>
+                        <h3>🔘 نمونه دکمه‌های موجود:</h3>
+                        <ul style={{paddingRight:"1.5rem", margin:"1rem 0"}}>
+                            <li><code>simple_button</code> – دکمه ساده</li>
+                            <li><code>link_button</code> – دکمه لینک</li>
+                            <li><code>number_picker_button</code> – انتخاب عدد از بازه</li>
+                            <li><code>textbox_button</code> – ورودی متن</li>
+                            <li><code>camera_image_button</code> – گرفتن عکس با دوربین</li>
+                            <li><code>gallery_video_button</code> – انتخاب ویدئو از گالری</li>
+                            <li><code>ask_phone_button</code> – درخواست شماره تلفن</li>
+                            <li><code>ask_location_button</code> – درخواست موقعیت</li>
+                            <li><code>calendar_button</code> – تقویم شمسی/میلادی</li>
+                            <li><code>selection_button</code> – لیست انتخابی</li>
+                        </ul>
+                        <div className="install-box" style={{background:"#1a1a2e", textAlign:"center"}}>
+                            <i className="fas fa-magic"></i> با ترکیب هر دکمه، کیپدهای حرفه‌ای بسازید!
+                        </div>
+                    </div>
+                )}
+
+                {/* تب متادیتا */}
+                {activeTab === "metadata" && (
+                    <div className="card">
+                        <h2><i className="fas fa-palette"></i> فرمت‌بندی متن با Metadata</h2>
+                        <pre>{`from robota import RubikaHelpers, MetadataTypeEnum
+
+text = "سلام کاربر! لطفاً به سایت بروید."
+parts = [
+    RubikaHelpers.metadata_part(MetadataTypeEnum.BOLD, 0, 4),
+    RubikaHelpers.metadata_part(MetadataTypeEnum.LINK, 13, 7, link_url="https://example.com")
+]
+metadata = RubikaHelpers.metadata(parts)
+bot.send_message(chat_id, text, metadata=metadata)`}</pre>
+                        <p>انواع متادیتا: <strong>Bold, Italic, Underline, Strike, Link, MentionText, Pre, Quote, Spoiler, Mono</strong></p>
+                        <div style={{background:"rgba(139,92,246,0.2)", padding:"0.8rem", borderRadius:"1rem", margin:"1rem 0"}}>
+                            <i className="fas fa-lightbulb"></i> نکته: MentionText فقط در گروه کار می‌کند و نیاز به user_id دارد.
+                        </div>
+                    </div>
+                )}
+
+                {/* تب دریافت رویدادها */}
+                {activeTab === "updates" && (
+                    <div className="card">
+                        <h2><i className="fas fa-exchange-alt"></i> دریافت پیام‌ها و رویدادها</h2>
+                        <h3>Long Polling خودکار (ساده)</h3>
+                        <pre>{`from robota import UpdateTypeEnum
+
+def handle(update):
+    if update.type == UpdateTypeEnum.NEW_MESSAGE:
+        print(f"جدید: {update.new_message.text}")
+
+bot.start_polling(handle, interval=1)`}</pre>
+                        <h3>Webhook (سرور اختصاصی)</h3>
+                        <pre>{`bot.update_bot_endpoints("https://yourdomain.com/webhook", "ReceiveUpdate")`}</pre>
+                        <p>در سرور خود (مثلاً Flask) با <code>RubikaBot.parse_update(request.get_data())</code> داده را به Update تبدیل کنید.</p>
+                        <p>📌 برای تست لوکال می‌توانید از ابزارهایی مثل <strong>ngrok</strong> استفاده کنید.</p>
+                    </div>
+                )}
+
+                {/* تب درباره من */}
+                {activeTab === "about" && (
+                    <div className="card">
+                        <h2><i className="fas fa-user-astronaut"></i> درباره توسعه‌دهنده</h2>
+                        <div style={{display:"flex", flexWrap:"wrap", gap:"1.5rem", alignItems:"center"}}>
+                            <div style={{background:"#8b5cf640", borderRadius:"50%", width:"90px", height:"90px", display:"flex", alignItems:"center", justifyContent:"center"}}>
+                                <i className="fab fa-python" style={{fontSize:"3rem", color:"#c084fc"}}></i>
+                            </div>
+                            <div>
+                                <p><strong>امیرعلی سرداری (AmirAli Coldark)</strong></p>
+                                <p>برنامه‌نویس ارشد پایتون، عاشق متن‌باز و جامعه روبیکا. این کتابخانه را برای سهولت توسعه‌دهندگان ایرانی ساختم تا بتوانند ربات‌های حرفه‌ای را با کمترین دردسر بسازند.</p>
+                                <p><i className="fab fa-github"></i> <a href="https://github.com/amiralicoldark" target="_blank">github.com/amiralicoldark</a><br/>
+                                <i className="fab fa-telegram"></i> <a href="https://rubika.ir/am1ralimo" target="_blank">rubika.ir/am1ralimo89</a><br/>
+                                <i className="fas fa-envelope"></i> amirdarkli80@gmail.com</p>
+                            </div>
+                        </div>
+                        <hr style={{margin:"1rem 0", borderColor:"#334"}}/>
+                        <p style={{textAlign:"center"}}>اگر از Robota استفاده می‌کنید، لطفاً یک <i className="fas fa-star"></i> در گیت‌هاب بگذارید. سپاسگزارم ❤️</p>
+                    </div>
+                )}
+
+                <footer>
+                    <p>Robota – آزاد، متن‌باز، تحت مجوز MIT | مستندات کامل در <a href="https://github.com/amiralicoldark/Robota">GitHub</a></p>
+                    <p style={{fontSize:"0.75rem", marginTop:"0.5rem"}}>طراحی شده با React · تمام متدهای رسمی روبیکا پشتیبانی می‌شوند</p>
+                </footer>
+            </div>
+        );
+    };
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
