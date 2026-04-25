@@ -1,12 +1,11 @@
-# rubika_bot.py
+# robota/__init__.py
 import requests
 import json
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, Callable
 from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 
-# =========================== Enums (کامل بر اساس مستندات) ===========================
+# =========================== Enums ===========================
 class ChatTypeEnum(str, Enum):
     USER = "User"
     BOT = "Bot"
@@ -115,8 +114,7 @@ class ButtonTypeEnum(str, Enum):
     ASK_MY_LOCATION = "AskMyLocation"
     BARCODE = "Barcode"
 
-
-# =========================== مدل‌های داده (Data Classes) ===========================
+# =========================== Data Models ===========================
 @dataclass
 class Location:
     latitude: str
@@ -179,8 +177,7 @@ class InlineMessage:
     location: Optional[Location] = None
     aux_data: Optional[Dict] = None
 
-
-# =========================== کلاس اصلی بات ===========================
+# =========================== Main Bot Class ===========================
 class RubikaBot:
     def __init__(self, token: str, base_url: str = "https://botapi.rubika.ir/v3"):
         self.token = token
@@ -198,7 +195,7 @@ class RubikaBot:
             raise Exception(f"API Error: {data}")
         return data
 
-    # ---------- متدهای اصلی ----------
+    # ---------- Methods ----------
     def get_me(self) -> Bot:
         data = self._request("getMe")
         bot_data = data.get("bot", {})
@@ -232,7 +229,10 @@ class RubikaBot:
         if reply_to_message_id:
             params["reply_to_message_id"] = reply_to_message_id
         if chat_keypad_type:
-            params["chat_keypad_type"] = chat_keypad_type.value if isinstance(chat_keypad_type, ChatKeypadTypeEnum) else chat_keypad_type
+            if isinstance(chat_keypad_type, ChatKeypadTypeEnum):
+                params["chat_keypad_type"] = chat_keypad_type.value
+            else:
+                params["chat_keypad_type"] = chat_keypad_type
         if metadata:
             params["metadata"] = metadata
         return self._request("sendMessage", params)
@@ -261,7 +261,10 @@ class RubikaBot:
         if reply_to_message_id:
             params["reply_to_message_id"] = reply_to_message_id
         if chat_keypad_type:
-            params["chat_keypad_type"] = chat_keypad_type.value if isinstance(chat_keypad_type, ChatKeypadTypeEnum) else chat_keypad_type
+            if isinstance(chat_keypad_type, ChatKeypadTypeEnum):
+                params["chat_keypad_type"] = chat_keypad_type.value
+            else:
+                params["chat_keypad_type"] = chat_keypad_type
         return self._request("sendLocation", params)
 
     def send_contact(
@@ -291,7 +294,10 @@ class RubikaBot:
         if reply_to_message_id:
             params["reply_to_message_id"] = reply_to_message_id
         if chat_keypad_type:
-            params["chat_keypad_type"] = chat_keypad_type.value if isinstance(chat_keypad_type, ChatKeypadTypeEnum) else chat_keypad_type
+            if isinstance(chat_keypad_type, ChatKeypadTypeEnum):
+                params["chat_keypad_type"] = chat_keypad_type.value
+            else:
+                params["chat_keypad_type"] = chat_keypad_type
         return self._request("sendContact", params)
 
     def get_chat(self, chat_id: str) -> Chat:
@@ -308,10 +314,6 @@ class RubikaBot:
         )
 
     def get_updates(self, limit: int = 100, auto_offset: bool = True) -> List[Update]:
-        """
-        دریافت آپدیت‌ها (long polling)
-        اگر auto_offset=True باشد، به طور خودکار offset_id را مدیریت می‌کند.
-        """
         params = {"limit": limit}
         if self._last_update_offset and auto_offset:
             params["offset_id"] = self._last_update_offset
@@ -335,20 +337,14 @@ class RubikaBot:
                     reply_to_message_id=msg.get("reply_to_message_id")
                 )
             if item.get("updated_message"):
-                # مشابه new_message
+                # similar to new_message, omitted for brevity
                 pass
             updates.append(upd)
         if auto_offset and data.get("next_offset_id"):
             self._last_update_offset = data["next_offset_id"]
         return updates
 
-    def forward_message(
-        self,
-        from_chat_id: str,
-        message_id: str,
-        to_chat_id: str,
-        disable_notification: bool = False
-    ) -> Dict:
+    def forward_message(self, from_chat_id: str, message_id: str, to_chat_id: str, disable_notification: bool = False) -> Dict:
         return self._request("forwardMessage", {
             "from_chat_id": from_chat_id,
             "message_id": message_id,
@@ -417,7 +413,10 @@ class RubikaBot:
         if inline_keypad:
             params["inline_keypad"] = inline_keypad
         if chat_keypad_type:
-            params["chat_keypad_type"] = chat_keypad_type.value if isinstance(chat_keypad_type, ChatKeypadTypeEnum) else chat_keypad_type
+            if isinstance(chat_keypad_type, ChatKeypadTypeEnum):
+                params["chat_keypad_type"] = chat_keypad_type.value
+            else:
+                params["chat_keypad_type"] = chat_keypad_type
         return self._request("sendFile", params)
 
     def request_send_file(self, type_: Union[str, FileTypeEnum]) -> str:
@@ -444,12 +443,8 @@ class RubikaBot:
     def unban_chat_member(self, chat_id: str, user_id: str) -> Dict:
         return self._request("unbanChatMember", {"chat_id": chat_id, "user_id": user_id})
 
-    # ========== وب‌هوک (دریافت خودکار پیام) ==========
     @staticmethod
     def parse_update(request_body: Union[str, bytes, Dict]) -> Update:
-        """
-        داده‌های POST ارسالی از روبیکا به وب‌هوک شما را به شیء Update تبدیل می‌کند.
-        """
         if isinstance(request_body, (str, bytes)):
             data = json.loads(request_body)
         else:
@@ -460,10 +455,8 @@ class RubikaBot:
             chat_id=update_data.get("chat_id", ""),
             removed_message_id=update_data.get("removed_message_id")
         )
-        # می‌توانید بقیه فیلدها را هم کامل کنید
 
-
-# =========================== ابزارهای کمکی برای ساخت دکمه‌ها (کامل) ===========================
+# =========================== Helpers for keypads and metadata ===========================
 class RubikaHelpers:
     @staticmethod
     def simple_button(button_id: str, button_text: str) -> Dict:
@@ -494,7 +487,9 @@ class RubikaHelpers:
         return {"id": button_id, "type": ButtonTypeEnum.LOCATION.value, "button_text": button_text, "button_location": loc}
 
     @staticmethod
-    def textbox_button(button_id: str, button_text: str, type_line: Union[str, ButtonTextboxTypeLineEnum] = ButtonTextboxTypeLineEnum.SINGLE, type_keypad: Union[str, ButtonTextboxTypeKeypadEnum] = ButtonTextboxTypeKeypadEnum.STRING, placeholder: str = None, title: str = None, default_value: str = None) -> Dict:
+    def textbox_button(button_id: str, button_text: str, type_line: Union[str, ButtonTextboxTypeLineEnum] = ButtonTextboxTypeLineEnum.SINGLE,
+                       type_keypad: Union[str, ButtonTextboxTypeKeypadEnum] = ButtonTextboxTypeKeypadEnum.STRING,
+                       placeholder: str = None, title: str = None, default_value: str = None) -> Dict:
         tb = {
             "type_line": type_line.value if isinstance(type_line, ButtonTextboxTypeLineEnum) else type_line,
             "type_keypad": type_keypad.value if isinstance(type_keypad, ButtonTextboxTypeKeypadEnum) else type_keypad
@@ -548,7 +543,8 @@ class RubikaHelpers:
         return {"id": button_id, "type": ButtonTypeEnum.BARCODE.value, "button_text": button_text}
 
     @staticmethod
-    def calendar_button(button_id: str, button_text: str, calendar_type: Union[str, ButtonCalendarTypeEnum] = ButtonCalendarTypeEnum.PERSIAN, min_year: str = None, max_year: str = None, default_value: str = None, title: str = None) -> Dict:
+    def calendar_button(button_id: str, button_text: str, calendar_type: Union[str, ButtonCalendarTypeEnum] = ButtonCalendarTypeEnum.PERSIAN,
+                        min_year: str = None, max_year: str = None, default_value: str = None, title: str = None) -> Dict:
         cal = {"type": calendar_type.value if isinstance(calendar_type, ButtonCalendarTypeEnum) else calendar_type}
         if min_year:
             cal["min_year"] = min_year
