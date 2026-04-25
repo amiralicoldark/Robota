@@ -1,7 +1,7 @@
-باشه، یک `README.md` کامل، واقعی و حرفه‌ای برای کتابخانه **Robota** مینویسم. تمام نکات نصب، آموزش گرفتن توکن، توضیح همه متدها با مثال، راه‌اندازی وب‌هوک، لانگ پولینگ، و در انتها درباره من (توسعه‌دهنده) را شامل میشود. همچنین آدرس دموی آنلاین (GitHub Pages) را هم اضافه میکنم.
+.
 
 ```markdown
-# 🤖 Robota – کتابخانه رسمی و کامل بات روبیکا
+# 🤖 Robota – کتابخانه  روبیکا
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
