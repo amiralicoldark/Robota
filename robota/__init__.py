@@ -1,19 +1,193 @@
 # rubika_bot.py
 import requests
+import json
 from typing import Optional, List, Dict, Any, Union
+from enum import Enum
+from dataclasses import dataclass, field
+from datetime import datetime
 
+# =========================== Enums (کامل بر اساس مستندات) ===========================
+class ChatTypeEnum(str, Enum):
+    USER = "User"
+    BOT = "Bot"
+    GROUP = "Group"
+    CHANNEL = "Channel"
+
+class FileTypeEnum(str, Enum):
+    FILE = "File"
+    IMAGE = "Image"
+    VOICE = "Voice"
+    VIDEO = "Video"
+    MUSIC = "Music"
+    GIF = "Gif"
+
+class ForwardedFromEnum(str, Enum):
+    USER = "User"
+    CHANNEL = "Channel"
+    BOT = "Bot"
+
+class PollStatusEnum(str, Enum):
+    OPEN = "Open"
+    CLOSED = "Closed"
+
+class ButtonSelectionTypeEnum(str, Enum):
+    TEXT_ONLY = "TextOnly"
+    TEXT_IMG_THU = "TextImgThu"
+    TEXT_IMG_BIG = "TextImgBig"
+
+class ButtonSelectionSearchEnum(str, Enum):
+    NONE = "None"
+    LOCAL = "Local"
+    API = "Api"
+
+class ButtonSelectionGetEnum(str, Enum):
+    LOCAL = "Local"
+    API = "Api"
+
+class ButtonCalendarTypeEnum(str, Enum):
+    PERSIAN = "DatePersian"
+    GREGORIAN = "DateGregorian"
+
+class ButtonTextboxTypeKeypadEnum(str, Enum):
+    STRING = "String"
+    NUMBER = "Number"
+
+class ButtonTextboxTypeLineEnum(str, Enum):
+    SINGLE = "SingleLine"
+    MULTI = "MultiLine"
+
+class ButtonLocationTypeEnum(str, Enum):
+    PICKER = "Picker"
+    VIEW = "View"
+
+class MessageSenderEnum(str, Enum):
+    USER = "User"
+    BOT = "Bot"
+
+class UpdateTypeEnum(str, Enum):
+    NEW_MESSAGE = "NewMessage"
+    EDITED_MESSAGE = "EditedMessage"
+    REMOVED_MESSAGE = "RemovedMessage"
+    STARTED_BOT = "StartedBot"
+    STOPPED_BOT = "StoppedBot"
+
+class ChatKeypadTypeEnum(str, Enum):
+    NONE = "None"
+    NEW = "New"
+    REMOVE = "Remove"
+
+class UpdateEndpointTypeEnum(str, Enum):
+    RECEIVE_UPDATE = "ReceiveUpdate"
+    RECEIVE_INLINE_MESSAGE = "ReceiveInlineMessage"
+    RECEIVE_QUERY = "ReceiveQuery"
+    GET_SELECTION_ITEM = "GetSelectionItem"
+    SEARCH_SELECTION_ITEMS = "SearchSelectionItems"
+
+class MetadataTypeEnum(str, Enum):
+    BOLD = "Bold"
+    ITALIC = "Italic"
+    MONO = "Mono"
+    UNDERLINE = "Underline"
+    STRIKE = "Strike"
+    SPOILER = "Spoiler"
+    LINK = "Link"
+    MENTION_TEXT = "MentionText"
+    PRE = "Pre"
+    QUOTE = "Quote"
+
+class ButtonTypeEnum(str, Enum):
+    SIMPLE = "Simple"
+    SELECTION = "Selection"
+    CALENDAR = "Calendar"
+    NUMBER_PICKER = "NumberPicker"
+    STRING_PICKER = "StringPicker"
+    LOCATION = "Location"
+    CAMERA_IMAGE = "CameraImage"
+    CAMERA_VIDEO = "CameraVideo"
+    GALLERY_IMAGE = "GalleryImage"
+    GALLERY_VIDEO = "GalleryVideo"
+    FILE = "File"
+    AUDIO = "Audio"
+    RECORD_AUDIO = "RecordAudio"
+    TEXTBOX = "Textbox"
+    LINK = "Link"
+    ASK_MY_PHONE_NUMBER = "AskMyPhoneNumber"
+    ASK_MY_LOCATION = "AskMyLocation"
+    BARCODE = "Barcode"
+
+
+# =========================== مدل‌های داده (Data Classes) ===========================
+@dataclass
+class Location:
+    latitude: str
+    longitude: str
+
+@dataclass
+class File:
+    file_id: str
+    file_name: str
+    size: str
+
+@dataclass
+class Bot:
+    bot_id: str
+    bot_title: str
+    avatar: Optional[File] = None
+    description: str = ""
+    username: str = ""
+    start_message: str = ""
+    share_url: str = ""
+
+@dataclass
+class Chat:
+    chat_id: str
+    chat_type: ChatTypeEnum
+    user_id: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    title: Optional[str] = None
+    username: Optional[str] = None
+
+@dataclass
+class Message:
+    message_id: str
+    time: int
+    is_edited: bool
+    sender_type: MessageSenderEnum
+    sender_id: str
+    text: Optional[str] = None
+    file: Optional[File] = None
+    location: Optional[Location] = None
+    reply_to_message_id: Optional[str] = None
+    aux_data: Optional[Dict] = None
+
+@dataclass
+class Update:
+    type: UpdateTypeEnum
+    chat_id: str
+    new_message: Optional[Message] = None
+    updated_message: Optional[Message] = None
+    removed_message_id: Optional[str] = None
+
+@dataclass
+class InlineMessage:
+    sender_id: str
+    message_id: str
+    chat_id: str
+    text: Optional[str] = None
+    file: Optional[File] = None
+    location: Optional[Location] = None
+    aux_data: Optional[Dict] = None
+
+
+# =========================== کلاس اصلی بات ===========================
 class RubikaBot:
-    """
-    کتابخانه رسمی بات روبیکا
-    تمام متدهای مستند شده پشتیبانی می‌شوند.
-    """
-
     def __init__(self, token: str, base_url: str = "https://botapi.rubika.ir/v3"):
         self.token = token
         self.base_url = base_url
+        self._last_update_offset = None
 
     def _request(self, method: str, params: Dict[str, Any] = None) -> Dict:
-        """ارسال درخواست به سرور روبیکا"""
         if params is None:
             params = {}
         url = f"{self.base_url}/{self.token}/{method}"
@@ -24,12 +198,18 @@ class RubikaBot:
             raise Exception(f"API Error: {data}")
         return data
 
-    # ----------------------------------------------
-    # متدهای اصلی (بر اساس مستندات)
-    # ----------------------------------------------
-    def get_me(self) -> Dict:
-        """اطلاعات پایه‌ای بات (getMe)"""
-        return self._request("getMe")
+    # ---------- متدهای اصلی ----------
+    def get_me(self) -> Bot:
+        data = self._request("getMe")
+        bot_data = data.get("bot", {})
+        return Bot(
+            bot_id=bot_data.get("bot_id", ""),
+            bot_title=bot_data.get("bot_title", ""),
+            description=bot_data.get("description", ""),
+            username=bot_data.get("username", ""),
+            start_message=bot_data.get("start_message", ""),
+            share_url=bot_data.get("share_url", "")
+        )
 
     def send_message(
         self,
@@ -39,12 +219,9 @@ class RubikaBot:
         inline_keypad: Dict = None,
         disable_notification: bool = False,
         reply_to_message_id: str = None,
-        chat_keypad_type: str = None,   # "New" یا "Remove"
+        chat_keypad_type: Union[str, ChatKeypadTypeEnum] = None,
         metadata: Dict = None
     ) -> Dict:
-        """
-        ارسال پیام متنی + دکمه‌های شیشه‌ای (InlineKeypad) یا صفحه‌کلید پایین (ChatKeypad)
-        """
         params = {"chat_id": chat_id, "text": text}
         if chat_keypad:
             params["chat_keypad"] = chat_keypad
@@ -55,18 +232,13 @@ class RubikaBot:
         if reply_to_message_id:
             params["reply_to_message_id"] = reply_to_message_id
         if chat_keypad_type:
-            params["chat_keypad_type"] = chat_keypad_type
+            params["chat_keypad_type"] = chat_keypad_type.value if isinstance(chat_keypad_type, ChatKeypadTypeEnum) else chat_keypad_type
         if metadata:
             params["metadata"] = metadata
         return self._request("sendMessage", params)
 
     def send_poll(self, chat_id: str, question: str, options: List[str]) -> Dict:
-        """ارسال نظرسنجی (sendPoll)"""
-        return self._request("sendPoll", {
-            "chat_id": chat_id,
-            "question": question,
-            "options": options
-        })
+        return self._request("sendPoll", {"chat_id": chat_id, "question": question, "options": options})
 
     def send_location(
         self,
@@ -77,9 +249,8 @@ class RubikaBot:
         disable_notification: bool = False,
         inline_keypad: Dict = None,
         reply_to_message_id: str = None,
-        chat_keypad_type: str = None
+        chat_keypad_type: Union[str, ChatKeypadTypeEnum] = None
     ) -> Dict:
-        """ارسال موقعیت مکانی (sendLocation)"""
         params = {"chat_id": chat_id, "latitude": str(latitude), "longitude": str(longitude)}
         if chat_keypad:
             params["chat_keypad"] = chat_keypad
@@ -90,7 +261,7 @@ class RubikaBot:
         if reply_to_message_id:
             params["reply_to_message_id"] = reply_to_message_id
         if chat_keypad_type:
-            params["chat_keypad_type"] = chat_keypad_type
+            params["chat_keypad_type"] = chat_keypad_type.value if isinstance(chat_keypad_type, ChatKeypadTypeEnum) else chat_keypad_type
         return self._request("sendLocation", params)
 
     def send_contact(
@@ -103,9 +274,8 @@ class RubikaBot:
         disable_notification: bool = False,
         inline_keypad: Dict = None,
         reply_to_message_id: str = None,
-        chat_keypad_type: str = None
+        chat_keypad_type: Union[str, ChatKeypadTypeEnum] = None
     ) -> Dict:
-        """ارسال مخاطب (sendContact)"""
         params = {
             "chat_id": chat_id,
             "first_name": first_name,
@@ -121,21 +291,56 @@ class RubikaBot:
         if reply_to_message_id:
             params["reply_to_message_id"] = reply_to_message_id
         if chat_keypad_type:
-            params["chat_keypad_type"] = chat_keypad_type
+            params["chat_keypad_type"] = chat_keypad_type.value if isinstance(chat_keypad_type, ChatKeypadTypeEnum) else chat_keypad_type
         return self._request("sendContact", params)
 
-    def get_chat(self, chat_id: str) -> Dict:
-        """دریافت اطلاعات یک چت (getChat)"""
-        return self._request("getChat", {"chat_id": chat_id})
+    def get_chat(self, chat_id: str) -> Chat:
+        data = self._request("getChat", {"chat_id": chat_id})
+        chat = data.get("chat", {})
+        return Chat(
+            chat_id=chat.get("chat_id", ""),
+            chat_type=ChatTypeEnum(chat.get("chat_type", "User")),
+            user_id=chat.get("user_id"),
+            first_name=chat.get("first_name"),
+            last_name=chat.get("last_name"),
+            title=chat.get("title"),
+            username=chat.get("username")
+        )
 
-    def get_updates(self, offset_id: str = None, limit: int = None) -> Dict:
-        """دریافت آخرین آپدیت‌ها (Long Polling) - getUpdates"""
-        params = {}
-        if offset_id:
-            params["offset_id"] = offset_id
-        if limit:
-            params["limit"] = limit
-        return self._request("getUpdates", params)
+    def get_updates(self, limit: int = 100, auto_offset: bool = True) -> List[Update]:
+        """
+        دریافت آپدیت‌ها (long polling)
+        اگر auto_offset=True باشد، به طور خودکار offset_id را مدیریت می‌کند.
+        """
+        params = {"limit": limit}
+        if self._last_update_offset and auto_offset:
+            params["offset_id"] = self._last_update_offset
+        data = self._request("getUpdates", params)
+        updates = []
+        for item in data.get("updates", []):
+            upd = Update(
+                type=UpdateTypeEnum(item.get("type", "NewMessage")),
+                chat_id=item.get("chat_id", ""),
+                removed_message_id=item.get("removed_message_id")
+            )
+            if item.get("new_message"):
+                msg = item["new_message"]
+                upd.new_message = Message(
+                    message_id=msg.get("message_id", ""),
+                    time=msg.get("time", 0),
+                    is_edited=msg.get("is_edited", False),
+                    sender_type=MessageSenderEnum(msg.get("sender_type", "User")),
+                    sender_id=msg.get("sender_id", ""),
+                    text=msg.get("text"),
+                    reply_to_message_id=msg.get("reply_to_message_id")
+                )
+            if item.get("updated_message"):
+                # مشابه new_message
+                pass
+            updates.append(upd)
+        if auto_offset and data.get("next_offset_id"):
+            self._last_update_offset = data["next_offset_id"]
+        return updates
 
     def forward_message(
         self,
@@ -144,7 +349,6 @@ class RubikaBot:
         to_chat_id: str,
         disable_notification: bool = False
     ) -> Dict:
-        """فوروارد کردن پیام (forwardMessage)"""
         return self._request("forwardMessage", {
             "from_chat_id": from_chat_id,
             "message_id": message_id,
@@ -153,7 +357,6 @@ class RubikaBot:
         })
 
     def edit_message_text(self, chat_id: str, message_id: str, text: str) -> Dict:
-        """ویرایش متن پیام (فقط پیام‌های خود بات) - editMessageText"""
         return self._request("editMessageText", {
             "chat_id": chat_id,
             "message_id": message_id,
@@ -161,7 +364,6 @@ class RubikaBot:
         })
 
     def edit_message_keypad(self, chat_id: str, message_id: str, inline_keypad: Dict) -> Dict:
-        """ویرایش دکمه‌های شیشه‌ای یک پیام (editMessageKeypad)"""
         return self._request("editMessageKeypad", {
             "chat_id": chat_id,
             "message_id": message_id,
@@ -169,37 +371,28 @@ class RubikaBot:
         })
 
     def delete_message(self, chat_id: str, message_id: str) -> Dict:
-        """حذف پیام (deleteMessage)"""
         return self._request("deleteMessage", {
             "chat_id": chat_id,
             "message_id": message_id
         })
 
     def set_commands(self, bot_commands: List[Dict[str, str]]) -> Dict:
-        """
-        تنظیم دستورات بات (setCommands)
-        مثال: [{"command": "start", "description": "شروع"}, ...]
-        """
         return self._request("setCommands", {"bot_commands": bot_commands})
 
-    def update_bot_endpoints(self, url: str, type_: str) -> Dict:
-        """تنظیم Webhook (updateBotEndpoints) - type: ReceiveUpdate, GetSelectionItem, ..."""
-        return self._request("updateBotEndpoints", {"url": url, "type": type_})
+    def update_bot_endpoints(self, url: str, type_: Union[str, UpdateEndpointTypeEnum]) -> Dict:
+        typ = type_.value if isinstance(type_, UpdateEndpointTypeEnum) else type_
+        return self._request("updateBotEndpoints", {"url": url, "type": typ})
 
-    def edit_chat_keypad(self, chat_id: str, chat_keypad: Dict = None, chat_keypad_type: str = "Remove") -> Dict:
-        """
-        حذف یا ویرایش صفحه‌کلید پایین چت (editChatKeypad)
-        - برای حذف: chat_keypad_type="Remove"
-        - برای افزودن/ویرایش: chat_keypad_type="New" و chat_keypad را پر کنید.
-        """
-        params = {"chat_id": chat_id, "chat_keypad_type": chat_keypad_type}
+    def edit_chat_keypad(self, chat_id: str, chat_keypad: Dict = None, chat_keypad_type: Union[str, ChatKeypadTypeEnum] = ChatKeypadTypeEnum.REMOVE) -> Dict:
+        typ = chat_keypad_type.value if isinstance(chat_keypad_type, ChatKeypadTypeEnum) else chat_keypad_type
+        params = {"chat_id": chat_id, "chat_keypad_type": typ}
         if chat_keypad:
             params["chat_keypad"] = chat_keypad
         return self._request("editChatKeypad", params)
 
-    def get_file(self, file_id: str) -> Dict:
-        """دریافت آدرس دانلود فایل (getFile)"""
-        return self._request("getFile", {"file_id": file_id})
+    def get_file(self, file_id: str) -> str:
+        data = self._request("getFile", {"file_id": file_id})
+        return data.get("download_url", "")
 
     def send_file(
         self,
@@ -210,9 +403,8 @@ class RubikaBot:
         disable_notification: bool = False,
         chat_keypad: Dict = None,
         inline_keypad: Dict = None,
-        chat_keypad_type: str = None
+        chat_keypad_type: Union[str, ChatKeypadTypeEnum] = None
     ) -> Dict:
-        """ارسال فایل با استفاده از file_id (sendFile)"""
         params = {"chat_id": chat_id, "file_id": file_id}
         if text:
             params["text"] = text
@@ -225,134 +417,176 @@ class RubikaBot:
         if inline_keypad:
             params["inline_keypad"] = inline_keypad
         if chat_keypad_type:
-            params["chat_keypad_type"] = chat_keypad_type
+            params["chat_keypad_type"] = chat_keypad_type.value if isinstance(chat_keypad_type, ChatKeypadTypeEnum) else chat_keypad_type
         return self._request("sendFile", params)
 
-    def request_send_file(self, type_: str) -> Dict:
-        """
-        دریافت آدرس آپلود فایل (requestSendFile)
-        type_ = "Image", "Video", "File", "Voice", "Music", "Gif"
-        """
-        return self._request("requestSendFile", {"type": type_})
+    def request_send_file(self, type_: Union[str, FileTypeEnum]) -> str:
+        typ = type_.value if isinstance(type_, FileTypeEnum) else type_
+        data = self._request("requestSendFile", {"type": typ})
+        return data.get("upload_url", "")
 
-    def upload_file_to_url(self, upload_url: str, file_path: str) -> Dict:
-        """آپلود فایل به آدرسی که request_send_file برگردانده است"""
+    def upload_file_to_url(self, upload_url: str, file_path: str) -> str:
         with open(file_path, "rb") as f:
             files = {"file": f}
             resp = requests.post(upload_url, files=files)
             resp.raise_for_status()
-            return resp.json()
+            result = resp.json()
+            return result.get("file_id", "")
 
-    def upload_and_send_file(
-        self,
-        chat_id: str,
-        file_path: str,
-        file_type: str,
-        caption: str = None,
-        **kwargs
-    ) -> Dict:
-        """
-        یک مرحله‌ای: درخواست آدرس آپلود -> آپلود فایل -> ارسال فایل با file_id به دست آمده
-        """
-        # 1. درخواست آدرس آپلود
-        res = self.request_send_file(file_type)
-        upload_url = res.get("upload_url")
-        if not upload_url:
-            raise Exception("upload_url not found in response")
-        # 2. آپلود فایل
-        upload_result = self.upload_file_to_url(upload_url, file_path)
-        file_id = upload_result.get("file_id")
-        if not file_id:
-            raise Exception("file_id not found in upload response")
-        # 3. ارسال فایل
+    def upload_and_send_file(self, chat_id: str, file_path: str, file_type: Union[str, FileTypeEnum], caption: str = None, **kwargs) -> Dict:
+        upload_url = self.request_send_file(file_type)
+        file_id = self.upload_file_to_url(upload_url, file_path)
         return self.send_file(chat_id=chat_id, file_id=file_id, text=caption, **kwargs)
 
     def ban_chat_member(self, chat_id: str, user_id: str) -> Dict:
-        """مسدود کردن کاربر در گروه/کانال (banChatMember)"""
         return self._request("banChatMember", {"chat_id": chat_id, "user_id": user_id})
 
     def unban_chat_member(self, chat_id: str, user_id: str) -> Dict:
-        """رفع مسدودیت کاربر (unbanChatMember)"""
         return self._request("unbanChatMember", {"chat_id": chat_id, "user_id": user_id})
 
+    # ========== وب‌هوک (دریافت خودکار پیام) ==========
+    @staticmethod
+    def parse_update(request_body: Union[str, bytes, Dict]) -> Update:
+        """
+        داده‌های POST ارسالی از روبیکا به وب‌هوک شما را به شیء Update تبدیل می‌کند.
+        """
+        if isinstance(request_body, (str, bytes)):
+            data = json.loads(request_body)
+        else:
+            data = request_body
+        update_data = data.get("update", {})
+        return Update(
+            type=UpdateTypeEnum(update_data.get("type", "NewMessage")),
+            chat_id=update_data.get("chat_id", ""),
+            removed_message_id=update_data.get("removed_message_id")
+        )
+        # می‌توانید بقیه فیلدها را هم کامل کنید
 
-# ------------------------------------------------------------
-# ابزارهای کمکی برای ساخت Keypad ، InlineKeypad ، Metadata
-# ------------------------------------------------------------
+
+# =========================== ابزارهای کمکی برای ساخت دکمه‌ها (کامل) ===========================
 class RubikaHelpers:
-    """توابع کمکی برای ساخت دکمه‌ها، صفحه‌کلیدها و متادیتا"""
-
     @staticmethod
     def simple_button(button_id: str, button_text: str) -> Dict:
-        """دکمه ساده (Simple)"""
-        return {"id": button_id, "type": "Simple", "button_text": button_text}
+        return {"id": button_id, "type": ButtonTypeEnum.SIMPLE.value, "button_text": button_text}
 
     @staticmethod
     def link_button(button_id: str, button_text: str, link_url: str) -> Dict:
-        """دکمه لینک (Link)"""
-        return {"id": button_id, "type": "Link", "button_text": button_text, "link_url": link_url}
+        return {"id": button_id, "type": ButtonTypeEnum.LINK.value, "button_text": button_text, "link_url": link_url}
 
     @staticmethod
     def selection_button(button_id: str, button_text: str, selection_data: Dict) -> Dict:
-        """دکمه لیست انتخابی (Selection) - selection_data مطابق مدل ButtonSelection"""
-        return {"id": button_id, "type": "Selection", "button_text": button_text, "button_selection": selection_data}
+        return {"id": button_id, "type": ButtonTypeEnum.SELECTION.value, "button_text": button_text, "button_selection": selection_data}
 
     @staticmethod
     def number_picker_button(button_id: str, button_text: str, min_val: int, max_val: int, default_val: int = None, title: str = None) -> Dict:
-        """دکمه انتخاب عدد"""
         picker = {"min_value": str(min_val), "max_value": str(max_val)}
         if default_val is not None:
             picker["default_value"] = str(default_val)
         if title:
             picker["title"] = title
-        return {"id": button_id, "type": "NumberPicker", "button_text": button_text, "button_number_picker": picker}
+        return {"id": button_id, "type": ButtonTypeEnum.NUMBER_PICKER.value, "button_text": button_text, "button_number_picker": picker}
 
     @staticmethod
-    def location_button(button_id: str, button_text: str, type_: str = "Picker", title: str = None) -> Dict:
-        """دکمه موقعیت مکانی (Picker یا View)"""
-        loc = {"type": type_}
+    def location_button(button_id: str, button_text: str, type_: Union[str, ButtonLocationTypeEnum] = ButtonLocationTypeEnum.PICKER, title: str = None) -> Dict:
+        loc = {"type": type_.value if isinstance(type_, ButtonLocationTypeEnum) else type_}
         if title:
             loc["title"] = title
-        return {"id": button_id, "type": "Location", "button_text": button_text, "button_location": loc}
+        return {"id": button_id, "type": ButtonTypeEnum.LOCATION.value, "button_text": button_text, "button_location": loc}
 
     @staticmethod
-    def textbox_button(button_id: str, button_text: str, type_line: str = "Single", type_keypad: str = "String", placeholder: str = None, title: str = None) -> Dict:
-        """دکمه ورودی متن"""
-        tb = {"type_line": type_line, "type_keypad": type_keypad}
+    def textbox_button(button_id: str, button_text: str, type_line: Union[str, ButtonTextboxTypeLineEnum] = ButtonTextboxTypeLineEnum.SINGLE, type_keypad: Union[str, ButtonTextboxTypeKeypadEnum] = ButtonTextboxTypeKeypadEnum.STRING, placeholder: str = None, title: str = None, default_value: str = None) -> Dict:
+        tb = {
+            "type_line": type_line.value if isinstance(type_line, ButtonTextboxTypeLineEnum) else type_line,
+            "type_keypad": type_keypad.value if isinstance(type_keypad, ButtonTextboxTypeKeypadEnum) else type_keypad
+        }
         if placeholder:
             tb["place_holder"] = placeholder
         if title:
             tb["title"] = title
-        return {"id": button_id, "type": "Textbox", "button_text": button_text, "button_textbox": tb}
+        if default_value:
+            tb["default_value"] = default_value
+        return {"id": button_id, "type": ButtonTypeEnum.TEXTBOX.value, "button_text": button_text, "button_textbox": tb}
+
+    @staticmethod
+    def camera_image_button(button_id: str, button_text: str) -> Dict:
+        return {"id": button_id, "type": ButtonTypeEnum.CAMERA_IMAGE.value, "button_text": button_text}
+
+    @staticmethod
+    def gallery_image_button(button_id: str, button_text: str) -> Dict:
+        return {"id": button_id, "type": ButtonTypeEnum.GALLERY_IMAGE.value, "button_text": button_text}
+
+    @staticmethod
+    def camera_video_button(button_id: str, button_text: str) -> Dict:
+        return {"id": button_id, "type": ButtonTypeEnum.CAMERA_VIDEO.value, "button_text": button_text}
+
+    @staticmethod
+    def gallery_video_button(button_id: str, button_text: str) -> Dict:
+        return {"id": button_id, "type": ButtonTypeEnum.GALLERY_VIDEO.value, "button_text": button_text}
+
+    @staticmethod
+    def file_button(button_id: str, button_text: str) -> Dict:
+        return {"id": button_id, "type": ButtonTypeEnum.FILE.value, "button_text": button_text}
+
+    @staticmethod
+    def audio_button(button_id: str, button_text: str) -> Dict:
+        return {"id": button_id, "type": ButtonTypeEnum.AUDIO.value, "button_text": button_text}
+
+    @staticmethod
+    def record_audio_button(button_id: str, button_text: str) -> Dict:
+        return {"id": button_id, "type": ButtonTypeEnum.RECORD_AUDIO.value, "button_text": button_text}
+
+    @staticmethod
+    def ask_phone_button(button_id: str, button_text: str) -> Dict:
+        return {"id": button_id, "type": ButtonTypeEnum.ASK_MY_PHONE_NUMBER.value, "button_text": button_text}
+
+    @staticmethod
+    def ask_location_button(button_id: str, button_text: str) -> Dict:
+        return {"id": button_id, "type": ButtonTypeEnum.ASK_MY_LOCATION.value, "button_text": button_text}
+
+    @staticmethod
+    def barcode_button(button_id: str, button_text: str) -> Dict:
+        return {"id": button_id, "type": ButtonTypeEnum.BARCODE.value, "button_text": button_text}
+
+    @staticmethod
+    def calendar_button(button_id: str, button_text: str, calendar_type: Union[str, ButtonCalendarTypeEnum] = ButtonCalendarTypeEnum.PERSIAN, min_year: str = None, max_year: str = None, default_value: str = None, title: str = None) -> Dict:
+        cal = {"type": calendar_type.value if isinstance(calendar_type, ButtonCalendarTypeEnum) else calendar_type}
+        if min_year:
+            cal["min_year"] = min_year
+        if max_year:
+            cal["max_year"] = max_year
+        if default_value:
+            cal["default_value"] = default_value
+        if title:
+            cal["title"] = title
+        return {"id": button_id, "type": ButtonTypeEnum.CALENDAR.value, "button_text": button_text, "button_calendar": cal}
+
+    @staticmethod
+    def string_picker_button(button_id: str, button_text: str, items: List[str], default_value: str = None, title: str = None) -> Dict:
+        picker = {"items": items}
+        if default_value:
+            picker["default_value"] = default_value
+        if title:
+            picker["title"] = title
+        return {"id": button_id, "type": ButtonTypeEnum.STRING_PICKER.value, "button_text": button_text, "button_string_picker": picker}
 
     @staticmethod
     def row(*buttons) -> Dict:
-        """ساخت یک ردیف از دکمه‌ها"""
         return {"buttons": list(buttons)}
 
     @staticmethod
     def keypad(rows: List[Dict], resize_keyboard: bool = False, one_time_keyboard: bool = False) -> Dict:
-        """ساخت صفحه‌کلید (Keypad) - قابل استفاده در send_message (chat_keypad یا inline_keypad)"""
-        return {
-            "rows": rows,
-            "resize_keyboard": resize_keyboard,
-            "one_time_keyboard": one_time_keyboard
-        }
+        return {"rows": rows, "resize_keyboard": resize_keyboard, "one_time_keyboard": one_time_keyboard}
 
     @staticmethod
-    def metadata_part(type_: str, from_index: int, length: int, link_url: str = None, mention_user_id: str = None) -> Dict:
-        """
-        ساخت یک قسمت متادیتا
-        type_ : Bold, Italic, Underline, Strike, Link, MentionText, Pre, Quote, Spoiler, Mono
-        """
-        part = {"type": type_, "from_index": from_index, "length": length}
-        if type_ == "Link" and link_url:
+    def metadata_part(type_: Union[str, MetadataTypeEnum], from_index: int, length: int, link_url: str = None, mention_user_id: str = None) -> Dict:
+        typ = type_.value if isinstance(type_, MetadataTypeEnum) else type_
+        part = {"type": typ, "from_index": from_index, "length": length}
+        if typ == "Link" and link_url:
             part["link_url"] = link_url
-        if type_ == "MentionText" and mention_user_id:
+        if typ == "MentionText" and mention_user_id:
             part["mention_text_user_id"] = mention_user_id
         return part
 
     @staticmethod
     def metadata(parts: List[Dict]) -> Dict:
-        """ساخت Metadata کامل برای ارسال با send_message"""
         return {"meta_data_parts": parts}
